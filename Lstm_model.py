@@ -31,16 +31,22 @@ dataset = data_csv1.astype('float32') # è½¬æ¢æ•°æ®ç±»åž‹ï
 data_csv2 = dataset[1:,np.newaxis]
 # print(type(dataset))
 
-# 归一化
+# 归一化处理，之前的归一化处理是归一化到0-1上，现在想试一下归一化到更大范围内的情况。
 max_value = np.max(dataset)
 min_value = np.min(dataset)
+mu = np.mean(dataset,axis=0)
+std = np.std(dataset,axis=0)
 scalar = max_value - min_value
-print(scalar)
-dataset = list(map(lambda x : x / scalar, data_csv2))  # 归一化处理
-# dataset = list(map(lambad x: x))
-# lambda：匿名函数，这边构造了一个x/scale归一化函数
-# map函数是一个映射函数，或者也可以称之为构造函数，两个参数(function，
-# iteration)：function表示执行哪些功能，iteration是要处理的数据对象
+# 除最大值法归一化
+# dataset = list(map(lambda x : x / scalar, data_csv2))  # 归一化处理
+# MinMaxScaler法
+dataset = list(map(lambda x : (x - min_value) / (max_value - min_value), data_csv2))
+# 均值归一化
+# dataset = list(map(lambda x : (x - mu) / std, data_csv2))
+# 缩放到特定区域,[0-10]
+# dataset = list(map(lambda x : x / scalar * 10 , data_csv2))
+
+
 BATCH_SIZE = 144
 HIDDEN_SIZE = 128
 
@@ -154,7 +160,7 @@ var_x = Variable(train_x).to(device)
 var_y = Variable(train_y).to(device)
 # var_y = var_y
 # 模型训练
-for e in range(5000):
+for e in range(2000):
     # var_x,var_y的格式应该和train_x,y 一样，都是9912 9911
     # 前向传播
     out = model(var_x) # 这边的out应该是model下训练出来的output
@@ -171,7 +177,7 @@ for e in range(5000):
 # torch.save(model.state_dict(), 'I:\\file\\newpytorch\\net3435.pth')
 # torch.save(model.state_dict(), 'I:\\file\\newpytorch\\net3536.pth')
 # torch.save(model.state_dict(), 'net318319.pth')
-torch.save(model.state_dict(), 'net408.pth')
+torch.save(model.state_dict(), 'net408-2.pth')
 # 感觉有些地方还是不太对，尤其是正确率方面
 print("save!")
 ## net存的是第一次训练的结果。
@@ -186,7 +192,7 @@ model1 = lstm().to(device)
 # model1.load_state_dict(torch.load('I:\\file\\newpytorch\\net.pth'))
 # model1.load_state_dict(torch.load('I:\\file\\newpytorch\\net3435.pth'))
 # model1.load_state_dict(torch.load('I:\\file\\newpytorch\\net3536.pth'))
-model1.load_state_dict(torch.load('net408.pth'))
+model1.load_state_dict(torch.load('net408-2.pth'))
 model1.eval()
 print('load successfully!')
 # 模型预测
@@ -218,11 +224,6 @@ for i in range(var_test_y.size(0)):
     if (abs((pred_test[i] - var_test_y[i])/var_test_y[i])< 0.05):
         running_correct += 1
 
-for i in range(200):
-    print(pred_test[i])
-    print(var_test_y[i])
-    print("----------------------------")
-
 print(running_correct)
 
 
@@ -240,12 +241,16 @@ print(running_correct)
 # 6537/9594=68.1(320-1--B=128ï¼ŒH=12)
 # 6639/9607=69.1(331-1--B=64,H=32)
 # 6420/9568=67.8(403--B=256,H=24)
-# 5636/9517=(406--B=512,H=24)
+# 5636/9517=59.2(406--B=512,H=24)
 # 6729/9591=70.1(408--B=144,H=128,lr=1e-3)
+# 6740/9591=70.3(408-2--B=144,H=128,lr=1e-3,最大最小归一化法)
 # you dian guo ni he le , ranhou chuli shuju yebutaixing
 
 # 得从归一化的地方处理处理一下看一下。
 
+
+# 修改了迭代次数，从5000降到了2000已经够应付1e-3的情况了
+# 新改了的地方是归一化的地方，总感觉归一化到太小了以后，容易出现一些其他问题
 
 
 
